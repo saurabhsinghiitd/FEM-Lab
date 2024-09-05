@@ -83,12 +83,18 @@ function main()
   drawingMesh(plot1,adjustedCoords, elementNodes,:red,:solid)
 
   # Save the plot
-  savefig("truss2d.png")
+  savefig("problem1_truss2d.png")
   # Stress at elements
   stress = stresses2Dtruss(numberElements, elementNodes, nodesCoords, D_col, E_vec)
 
-  # Optional drawing part would be implemented here using a Julia plotting library
-  
+  # Display Result
+  println("\nDisplacement Vector: ")
+  display(D_col)
+  println("\nForce Vector: ")
+  display(F_col)
+  println("\nStress: ")
+  display(stress)
+    
 end
 
 main()
