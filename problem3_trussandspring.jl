@@ -21,50 +21,36 @@ function main()
   # Generation of coordinates and connectivities
   nodesCoords = [
     0. 0.;
-    0. 3000.;
-    3000. 0.;
-    3000. 3000.;
-    6000. 0.;
-    6000. 3000.
+    -5000.0*cos(pi/4) 5000.0*sin(pi/4);
+    -10000.0 0.
   ]
-  numberNodes = size(nodesCoords, 1)
+  numberNodes = size(nodesCoords, 1) 
 
   elementNodes = [
     1 2;
     1 3;
-    2 3;
-    2 4;
-    1 4;
-    3 4;
-    3 6;
-    4 5;
-    4 6;
-    3 5;
-    5 6
+    1 4
   ]
   numberElements = size(elementNodes, 1)
 
   # GDof: total number of degrees of freedom
-  GDof = 2 * numberNodes
+  GDof = 2 * (numberNodes) #+1 for spring
 
   # Assembly stiffness matrix
   K_assembly = formStiffness2Dtruss(GDof, numberElements, elementNodes, nodesCoords, E_vec, A_vec)
 
+  #Spring stiffness
+  K_assembly[[2,7], [2,7]] += 2000*[1 -1; -1 1]
+
   # Boundary conditions
-  prescribedDof = [1,2,10]
+  prescribedDof = 3:8
 
   # Force vector
   F_col = fill(NaN, GDof)
-  F_col[4] = -50e3
-  F_col[8] = -100e3
-  F_col[12] = -50e3
-  for idof in [3,5,6,7,9,11]
-    F_col[idof] = 0.
-  end
+  F_col[2] = -25e3
 
   # Displacement vector
   D_col = fill(NaN, GDof)
-  for idof in prescribedDof D_col[idof] = 0.0 end
 
   # Solution
   D_col, F_col = solution(prescribedDof, K_assembly, D_col, F_col)
@@ -97,7 +83,7 @@ function main()
   drawingMesh(plot1,adjustedCoords, elementNodes,:red,:solid)
 
   # Save the plot
-  savefig("problem2_truss2d.png")
+  savefig("problem3_truss&spring.png")
   # Stress at elements
   stress = stresses2Dtruss(numberElements, elementNodes, nodesCoords, D_col, E_vec)
 
