@@ -24,7 +24,7 @@ function main()
     -5000.0*cos(pi/4) 5000.0*sin(pi/4);
     -10000.0 0.
   ]
-  numberNodes = size(nodesCoords, 1) 
+  numberNodes = size(nodesCoords, 1) +1
 
   elementNodes = [
     1 2;
@@ -37,7 +37,7 @@ function main()
   GDof = 2 * (numberNodes) #+1 for spring
 
   # Assembly stiffness matrix
-  K_assembly = formStiffness2Dtruss(GDof, numberElements, elementNodes, nodesCoords, E_vec, A_vec)
+  K_assembly = formStiffness2Dtruss(GDof, numberElements-1, elementNodes, nodesCoords, E_vec, A_vec)
 
   #Spring stiffness
   K_assembly[[2,7], [2,7]] += 2000*[1 -1; -1 1]
@@ -46,19 +46,20 @@ function main()
   prescribedDof = 3:8
 
   # Force vector
-  F_col = fill(NaN, GDof)
+  F_col = fill(0., GDof)
   F_col[2] = -25e3
 
   # Displacement vector
-  D_col = fill(NaN, GDof)
+  D_col = fill(0., GDof)
+  for idof in prescribedDof D_col[idof] = 0.0 end
 
   # Solution
   D_col, F_col = solution(prescribedDof, K_assembly, D_col, F_col)
 
   ### POST PROCESSING
   # Deformation components
-  us = 1:2:(2 * numberNodes - 1)
-  vs = 2:2:(2 * numberNodes)
+  us = 1:2:(2 * (numberNodes-1) - 1)
+  vs = 2:2:(2 * (numberNodes-1))
 
   # Extract the x and y components of the displacement
   XX = D_col[us]
@@ -77,15 +78,25 @@ function main()
   plot1 = plot(aspect_ratio=:equal)
 
   # Draw the original mesh
-  drawingMesh(plot1, nodesCoords, elementNodes,:black, :dot)
+  # drawingMesh(plot1, nodesCoords, elementNodes,:black, :dot)
+  for iElement in 1:numberElements-1
+    xCoords = nodesCoords[elementNodes[iElement, :], 1]
+    yCoords = nodesCoords[elementNodes[iElement, :], 2]
+    plot!(plot1,xCoords, yCoords, color=:black, linestyle=:dot, label=false)
+  end
 
   # Draw the deformed mesh
-  drawingMesh(plot1,adjustedCoords, elementNodes,:red,:solid)
+  # drawingMesh(plot1,adjustedCoords, elementNodes,:red,:solid)
+  for iElement in 1:numberElements-1
+    xCoords = adjustedCoords[elementNodes[iElement, :], 1]
+    yCoords = adjustedCoords[elementNodes[iElement, :], 2]
+    plot!(plot1,xCoords, yCoords, color=:red, linestyle=:solid, label=false)
+  end
 
   # Save the plot
   savefig("problem3_truss&spring.png")
   # Stress at elements
-  stress = stresses2Dtruss(numberElements, elementNodes, nodesCoords, D_col, E_vec)
+  stress = stresses2Dtruss(numberElements-1, elementNodes, nodesCoords, D_col, E_vec)
 
   # Display Result
   println("\nDisplacement Vector: ")
