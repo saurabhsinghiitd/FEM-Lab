@@ -17,22 +17,32 @@ function main()
   # Units used are ft lb
 
   # Material properties
-  E_vec = [30e6, 30e6, 30e6]
-  A_vec = [2, 2, 2]
+  E_vec = 70e3*ones(11)
+  A_vec = 300*ones(11)
 
   # Generation of coordinates and connectivities
   nodesCoords = [
       0.0 0.0;
-      0.0 120.0;
-      120.0 120.0;
-      120.0 0.0
+      0.0 3000.0;
+      3000. 0.;
+      3000. 3000.;
+      6000. 0.;
+      6000. 3000.
   ]
   numberNodes = size(nodesCoords, 1)
 
   elementNodes = [
       1 2;
       1 3;
-      1 4
+      2 3;
+      2 4;
+      1 4;
+      3 4;
+      3 6;
+      4 5;
+      4 6;
+      3 5;
+      5 6
   ]
   numberElements = size(elementNodes, 1)
 
@@ -43,12 +53,18 @@ function main()
   K_assembly = formStiffness2Dtruss(GDof, numberElements, elementNodes, nodesCoords, E_vec, A_vec)
 
   # Boundary conditions
-  prescribedDof = 3:8
+  prescribedDof = [1,2,10]
 
   # Force vector
   F_col = fill(NaN, GDof)
-  F_col[1] = 0.0
-  F_col[2] = -1e4
+  F_col[4] = -50.0e3
+  F_col[8] = -100.0e3
+  F_col[12] = -50.0e3
+
+  zeroFDof = [3,5,6,7,9,11]
+  for idof in zeroFDof 
+    F_col[idof] = 0.0 
+  end
 
   # Displacement vector
   D_col = fill(NaN, GDof)
@@ -72,7 +88,7 @@ function main()
   dispNorm = maximum(sqrt.(XX.^2 .+ YY.^2))
 
   # Scale factor for displacements
-  scaleFact = 15000 * dispNorm
+  scaleFact =  dispNorm
 
   # Adjust node coordinates with displacements for visualization
   adjustedCoords = nodesCoords .+ scaleFact * hcat(XX, YY)
@@ -87,7 +103,7 @@ function main()
   drawingMesh(plot1,adjustedCoords, elementNodes,:red,:solid)
 
   # Save the plot
-  savefig("problem1_truss2d.png")
+  savefig("problem2.png")
   # Stress at elements
   stress = stresses2Dtruss(numberElements, elementNodes, nodesCoords, D_col, E_vec)
 
